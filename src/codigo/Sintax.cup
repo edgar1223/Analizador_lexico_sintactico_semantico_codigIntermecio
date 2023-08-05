@@ -1,0 +1,310 @@
+package codigo;
+
+import java_cup.runtime.Symbol;
+
+action code
+{:
+    TablaSimbolos ta;
+    int valido = 1;  
+    static boolean seguir = true; 
+    Cuadrupla cua;
+    int temp = 1;
+:}
+
+parser code
+{:
+    private Symbol s;
+    
+    public void syntax_error(Symbol s){
+        this.s = s;
+    }
+
+    public Symbol getS(){
+        return this.s;
+}
+:};
+
+ terminal Linea, Comillas, Int, Float, Punto, Char, Cadena, If, Else, Do, While, For, Main, Clase, Publico, Void,
+    Igual, Suma, Resta, Multiplicacion, Division, Op_logico, Op_relacional,
+    Op_atribucion, Op_incremento, Op_booleano, Parentesis_a, Parentesis_c,
+    Llave_a, Llave_c, Corchete_a, Corchete_c, P_coma, Identificador,
+    Numero, Caracter, D_puntos, system, Out, Println, SP, Texto;
+non terminal INICIO, SENTENCIA, DECLARACION, DECLARACION_FOR, IF, IF_ELSE,
+    WHILE, DO_WHILE, FOR, SENTENCIA_BOOLEANA, SENTENCIA_FOR, METODO, OPERADOR, IMPRIMIR;
+
+start with INICIO;
+
+INICIO ::= 
+    Clase Identificador Llave_a  Llave_c |
+    Publico Clase Identificador Llave_a  Llave_c |
+    Clase Identificador Llave_a METODO  Llave_c |
+    Publico Clase Identificador Llave_a METODO Llave_c 
+;
+
+METODO ::=
+Publico Void Identificador Parentesis_a Parentesis_c Llave_a SENTENCIA Llave_c |
+Void Identificador Parentesis_a Parentesis_c Llave_a Llave_c |
+Void Identificador Parentesis_a Parentesis_c Llave_a SENTENCIA Llave_c |
+Publico Void Identificador Parentesis_a Parentesis_c Llave_a Llave_c
+;
+
+SENTENCIA ::= 
+    SENTENCIA DECLARACION |
+    DECLARACION |
+    SENTENCIA IF | 
+    IF |
+    SENTENCIA IF_ELSE |
+    IF_ELSE |
+    SENTENCIA WHILE |
+    WHILE |
+    SENTENCIA DO_WHILE
+    DO_WHILE |
+    SENTENCIA FOR |
+    FOR |
+    SENTENCIA IMPRIMIR |
+    IMPRIMIR
+;
+DECLARACION ::= 
+    Identificador:a1 Igual Identificador:a2 OPERADOR:oper Identificador:a3 {:
+    boolean p = ta.comprobarExistencia(a1.toString());
+    boolean p1 = ta.comprobarExistencia(a2.toString());
+    boolean p2 = ta.comprobarExistencia(a3.toString());
+    if(p && p1 && p2 ){
+    RESULT=a1.toString();
+        ta = new TablaSimbolos();
+        boolean p3 = ta.comprobarTipos(a1.toString(), a2.toString(), a3.toString());
+        if(p3){
+        Simbolos s1 = TablaSimbolos.busca(a2.toString());
+        Simbolos s2 = TablaSimbolos.busca(a3.toString());
+        String a = s1.getValor(); 
+        String b = s2.getValor();
+        String c = oper.toString();
+        String resul = a +" "+oper+" " + b;
+        ta.setValor(a1.toString(), resul);
+        cua.insertarOperacion(c, "temp"+temp, a2.toString(), a3.toString());
+        cua.insertarAsignacion(a1.toString(), "temp"+temp);
+        temp ++;
+    } else {
+        ta.limpiar();
+        cua.limpiar();
+    }   } else {
+        ta.limpiar();
+        temp = 1;
+        cua.limpiar();
+        seguir = false;
+    }
+    :} P_coma |
+    Int Identificador Op_atribucion Numero P_coma |
+    Int Identificador:i1 Igual Numero:e1 {:
+        if(seguir){
+       
+            RESULT=i1.toString();
+            ta = new TablaSimbolos();
+            seguir = ta.crearEntrada(i1.toString(), "INTEGER");
+            if(seguir){
+            ta.setValor(i1.toString(), e1.toString());
+            cua.insertarAsignacion(i1.toString(), e1.toString());
+            }
+        } else{
+        ta.limpiar();
+        cua.limpiar();
+        temp = 1;
+        seguir = false;
+        }
+        :} P_coma |
+    Int Identificador:i1 {:
+        RESULT=i1.toString();
+        if(seguir){
+        ta = new TablaSimbolos();
+        seguir = ta.crearEntrada(i1.toString(), "INTEGER");
+        if(seguir)cua.declarar(i1.toString());
+        } else {
+        cua.limpiar();
+        ta.limpiar();
+        seguir = false;
+        }
+        :} P_coma |
+    Identificador:i1 Igual Numero:e1 {:
+        RESULT=i1.toString();
+        if(seguir){
+        ta = new TablaSimbolos();
+        boolean p = ta.comprobarExistencia(i1.toString());
+        if(p){
+        ta.setValor(i1.toString(), e1.toString());
+        cua.insertarAsignacion(i1.toString(), e1.toString());
+        } else{ta.limpiar();
+        cua.limpiar();
+        seguir = false;}  } else {
+        ta.limpiar();
+        cua.limpiar();
+        seguir = false;
+        }
+        :} P_coma |
+    Int Identificador Op_incremento P_coma | 
+    Int Op_incremento Identificador P_coma |
+    Int Identificador:a1 Igual Identificador:a2 OPERADOR:oper Identificador:a3 {:
+        RESULT=a1.toString();
+        if(seguir){
+        ta = new TablaSimbolos();
+        cua.declarar(a1.toString());
+        boolean p1 = ta.comprobarExistencia(a2.toString());
+        boolean p2 = ta.comprobarExistencia(a3.toString());
+        if(p1 && p2 ){
+            seguir = ta.crearEntrada(a1.toString(), "INTEGER");
+            boolean p3 = ta.comprobarTipos(a1.toString(), a2.toString(), a3.toString());
+            if(p3){
+            Simbolos s1 = TablaSimbolos.busca(a2.toString());
+            Simbolos s2 = TablaSimbolos.busca(a3.toString());
+            String a = s1.getValor(); 
+            String b = s2.getValor();
+            String c = oper.toString();
+            String resul = a +" "+c+" " + b;
+            if(seguir){
+            ta.setValor(a1.toString(), resul);
+            cua.insertarOperacion(c, "temp"+temp, a2.toString(), a3.toString());
+            cua.insertarAsignacion(a1.toString(), "temp"+temp);
+            temp ++;}
+        } else {
+            ta.limpiar();
+            cua.limpiar();
+        }   } else {
+            ta.limpiar();
+            temp = 1;
+            cua.limpiar();
+            seguir = false;
+        } } else {
+            cua.limpiar();
+        }
+    :} P_coma| 
+    Int Identificador:a1 Igual Numero:a2 OPERADOR:oper Numero:a3 {:
+        RESULT=a1.toString();
+        if(seguir){
+        ta = new TablaSimbolos();
+        cua.declarar(a1.toString());
+            String c = oper.toString();
+            String resul = a2.toString() +" "+ c +" " + a3.toString();
+            seguir = ta.crearEntrada(a1.toString(), "INTEGER");
+            if(seguir){ta.setValor(a1.toString(), resul);
+            cua.insertarOperacion(c, "temp"+temp, a2.toString(), a3.toString());
+            cua.insertarAsignacion(a1.toString(), "temp"+temp);
+            temp ++;}
+        } else {
+            cua.limpiar();
+        } 
+    :} P_coma| 
+    Float Identificador:i3 Igual Numero:n1 Punto Numero:n2 {:
+        RESULT=i3.toString();
+        if(seguir){
+            ta = new TablaSimbolos();
+            seguir = ta.crearEntrada(i3.toString(), "FLOAT");
+            if(seguir){
+            String numero = n1.toString();
+            String decimal = n2.toString();
+            String valor = numero + "." + decimal;
+            ta.setValor(i3.toString(), valor);
+        }   } else{
+            ta.limpiar();
+            cua.limpiar();
+            seguir = false;
+        }
+        :} P_coma |
+    Identificador:i5 Igual Numero:n1 Punto Numero:n2 {:
+        RESULT=i5.toString();
+        ta = new TablaSimbolos();
+        String numero = n1.toString();
+        String decimal = n2.toString();
+        String valor = numero + "." + decimal;
+        ta.setValor(i5.toString(), valor);  
+        :} P_coma | 
+    Float Identificador:i3 {:
+        RESULT=i3.toString();
+        ta = new TablaSimbolos();
+        ta.crearEntrada(i3.toString(), "FLOAT");
+        :} P_coma | 
+    Cadena Identificador Op_atribucion Comillas Comillas P_coma |
+    Cadena Identificador:t1 Igual Comillas Comillas {:
+            RESULT = t1.toString();
+        if(seguir){
+            ta = new TablaSimbolos();
+            seguir = ta.crearEntrada(t1.toString(), "STRING");
+            //cua.declarar(t1.);
+        } else {cua.limpiar(); ta.limpiar();}
+    :} P_coma |
+    Cadena Identificador Op_atribucion Comillas Identificador Comillas P_coma |
+    Cadena Identificador Igual Comillas Identificador Comillas P_coma |
+    Char Identificador:i2 Igual Caracter:e2 {:
+        RESULT = i2.toString();
+        ta = new TablaSimbolos();
+        ta.crearEntrada(i2.toString(), "CHAR");
+        ta.setValor(i2.toString(), e2.toString().replaceAll("'", " "));
+        :} P_coma |
+    Identificador:i2 Igual Caracter:e2 {:
+        RESULT = i2.toString();
+        ta = new TablaSimbolos();
+        ta.setValor(i2.toString(), e2.toString().replaceAll("'", " "));
+        :} P_coma |
+    Char Identificador:i2 {:
+        RESULT = i2.toString();
+        ta = new TablaSimbolos();
+        ta.crearEntrada(i2.toString(), "CHAR");
+        :} P_coma 
+;
+IF ::= If Parentesis_a SENTENCIA_BOOLEANA Parentesis_c Llave_a SENTENCIA Llave_c
+;
+OPERADOR ::= Suma:op1 {:RESULT = op1.toString();:}| Resta:op1 {:RESULT = op1.toString();:} | Multiplicacion:op1 {:RESULT = op1.toString();:} | Division:op1 {:RESULT = op1.toString();:}
+;
+SENTENCIA_BOOLEANA ::= 
+    Op_booleano | 
+    Identificador Op_relacional Op_booleano |
+    Identificador Op_relacional Numero |
+    Identificador Op_relacional Identificador |
+    Identificador Op_relacional Comillas Comillas |
+    Identificador Op_relacional Comillas Identificador Comillas
+;
+IF_ELSE ::= If Parentesis_a SENTENCIA_BOOLEANA Parentesis_c Llave_a SENTENCIA Llave_c Else Llave_a SENTENCIA Llave_c
+;
+WHILE ::= While Parentesis_a SENTENCIA_BOOLEANA Parentesis_c Llave_a SENTENCIA Llave_c
+;
+DO_WHILE ::= Do Llave_a SENTENCIA Llave_c While Parentesis_a SENTENCIA_BOOLEANA Parentesis_c P_coma
+;
+FOR ::= For Parentesis_a SENTENCIA_FOR Parentesis_c Llave_a SENTENCIA Llave_c
+;
+SENTENCIA_FOR ::=
+    Int Identificador Igual Numero P_coma SENTENCIA_BOOLEANA P_coma DECLARACION_FOR |
+    Identificador Igual Numero P_coma SENTENCIA_BOOLEANA P_coma DECLARACION_FOR
+;
+DECLARACION_FOR ::= 
+    Identificador Op_atribucion Numero |
+    Identificador Op_incremento | 
+    Op_incremento Identificador
+;
+IMPRIMIR ::= 
+    SP Println Parentesis_a Parentesis_c {:
+        if(seguir){
+            cua.imprimirCSalto("");
+        } else {
+        cua.limpiar();
+        ta.limpiar();
+        } 
+    :} P_coma |
+    SP Parentesis_a Caracter:e1 Parentesis_c {:
+        RESULT = e1.toString().replaceAll("'", "");
+        if(seguir){
+            cua.imprimirCSalto(e1.toString().replaceAll("'", ""));
+        } else {cua.limpiar(); ta.limpiar();}
+    :} P_coma |
+    SP Parentesis_a Texto:a1 Parentesis_c {:
+        RESULT = a1.toString();
+        if(seguir){
+        cua.imprimirCSalto(a1.toString());} else {cua.limpiar(); ta.limpiar();}
+    :} P_coma |
+    SP Parentesis_a Identificador:e1 Parentesis_c {:
+        RESULT = toString();
+        boolean p = ta.comprobarExistencia(e1.toString());
+        if(p){
+            Simbolos s1 = TablaSimbolos.busca(e1.toString());
+            String textos = s1.getValor();
+            cua.imprimirCSalto(textos);
+        } else {cua.limpiar(); ta.limpiar(); seguir = false;}
+    :} P_coma   
+;
